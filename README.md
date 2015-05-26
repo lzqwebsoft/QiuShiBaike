@@ -5,7 +5,7 @@
 *  Java ------- Java糗百客户端程序
 *  Python ----- Python Scrapy糗百爬取程序
 
-#项目依赖模块
+#Python依赖模块
 * service_identity
 * pywin32(windows环境)
 * mysql.connector
