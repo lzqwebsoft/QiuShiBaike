@@ -27,7 +27,7 @@ class QiuShiBaiKe(scrapy.Spider):
         # 得到下一页链接地址
         next_href = response.xpath('//div[contains(@class, "pagebar")]/div/a[contains(@class, "next")]/@href').extract()
         url = "http://www.qiushibaike.com" + next_href[0].strip()
-        current_pageNo = response.xpath('//div[contains(@class, "pagebar")]/div/span[contains(@class, "current")]/text()').extract()
+        current_pageNo = response.xpath('//div[contains(@class, "pagebar")]/div/a[contains(@class, "current")]/text()').extract()
         current = current_pageNo[0].strip()
         # 只爬取首页面的35页内容
         if(int(current)!=35):
