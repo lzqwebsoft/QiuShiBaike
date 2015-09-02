@@ -11,6 +11,8 @@ import java.io.PrintWriter;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 
 public class QiuShiClient extends JDialog {
 
@@ -23,6 +25,7 @@ public class QiuShiClient extends JDialog {
     private ImageIcon currentBigImage;
     private ImageDisplayWindow imagePlayer;
     private Font customFont;
+    private JPopupMenu popupMenu;   // 右击内容菜单
 
     public QiuShiClient() {
         super();
@@ -137,6 +140,8 @@ public class QiuShiClient extends JDialog {
         content.setFont(customFont.deriveFont(Font.PLAIN, 14));
         centerPane.add(content);
         content.setBounds(10, authorHeight + 10, getWidth()-20, cententHeight);
+
+        addMouseClickListener();  // 为内容添加鼠标单击事件
 
         int thumbHeight = 20;
         InputStream thumbStream = firstQS.getThumb();
@@ -279,10 +284,40 @@ public class QiuShiClient extends JDialog {
                     toPrevious();
                 } else if(keyCode == KeyEvent.VK_D || keyCode == KeyEvent.VK_RIGHT || keyCode == KeyEvent.VK_DOWN) {
                     toNext();
+                } else if(e.isControlDown() && keyCode == KeyEvent.VK_C) {
+                    // 快捷键Ctr+C, 复制内容到剪切板
+                    String context = content.getText();
+                    context = context.replaceAll("<br />", "\r\n");
+                    context = context.replaceAll("<[^>]+>|<[^>]+","");
+                    if(context != null && context.trim().length() > 0) {
+                        StringSelection stringSelection = new StringSelection(context);
+                        Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+                        clpbrd.setContents(stringSelection, null);
+                    }
                 }
             }
         });
         comp.requestFocus();
+    }
+
+    // 添加内容鼠标右单击事件
+    private void addMouseClickListener() {
+        // 内容菜单
+        popupMenu = new JPopupMenu();
+        JMenuItem copyItem = new JMenuItem("复制 Ctr+C");
+        copyItem.setFont(customFont.deriveFont(Font.PLAIN, 14));
+        popupMenu.add(copyItem);
+        copyItem.setActionCommand(MenuItemMonitor.COPY_CONTENT);
+        copyItem.addActionListener(new MenuItemMonitor(content));
+
+        content.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                // 如果是弹出菜单事件(根据平台不同可能不同) 
+                if (event.isPopupTrigger()) {
+                    popupMenu.show(event.getComponent(), event.getX(), event.getY());
+                }
+            } 
+        });
     }
 
     //初始化托盘

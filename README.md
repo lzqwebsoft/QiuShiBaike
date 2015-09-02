@@ -5,6 +5,13 @@
 *  Java ------- Java糗百客户端程序
 *  Python ----- Python Scrapy糗百爬取程序
 
+#Java编译
+`cd QiuShiBaike/Java/src`
+`javac -classpath . -encoding utf8  Main.java`
+
+#Java运行
+`java -classpath <mysql驱动>.jar;. Main`
+
 #Python依赖模块
 * service_identity
 * pywin32(windows环境)
