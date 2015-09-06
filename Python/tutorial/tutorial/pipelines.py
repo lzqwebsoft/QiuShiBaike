@@ -59,7 +59,7 @@ class QiuShiPipeline(object):
             thumb = item['thumb'][0]
         author = ""
         if item['author']:
-            author = item['author'][0]
+            author = item['author']
         content = ""
         if item['content']:
             content = "<br />".join([x.strip() for x in item['content'] if x.strip()])
