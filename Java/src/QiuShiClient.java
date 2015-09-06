@@ -16,6 +16,7 @@ import java.awt.datatransfer.StringSelection;
 
 public class QiuShiClient extends JDialog {
 
+    public Font customFont;
     private int locationX, locationY;
     private boolean isDraging = false;  //用于指示拖动
     private JLabel header, author, content;
@@ -24,8 +25,6 @@ public class QiuShiClient extends JDialog {
     private QiuShi current;
     private ImageIcon currentBigImage;
     private ImageDisplayWindow imagePlayer;
-    private Font customFont;
-    private JPopupMenu popupMenu;   // 右击内容菜单
 
     public QiuShiClient() {
         super();
@@ -49,12 +48,7 @@ public class QiuShiClient extends JDialog {
             exitSystem();
         }
         // 加载字体
-        try {
-            customFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getClassLoader().getResourceAsStream("custom_font.ttf"));
-        } catch(Exception e) {
-            e.printStackTrace();
-            
-        }
+        loadingFont();
         
         // 设定默认的高度,与居中
         this.setSize(300, 500);
@@ -141,7 +135,7 @@ public class QiuShiClient extends JDialog {
         centerPane.add(content);
         content.setBounds(10, authorHeight + 10, getWidth()-20, cententHeight);
 
-        addMouseClickListener();  // 为内容添加鼠标单击事件
+        addMouseClickListener(content, MenuItemMonitor.COPY_CONTENT);  // 为内容添加鼠标单击事件
 
         int thumbHeight = 20;
         InputStream thumbStream = firstQS.getThumb();
@@ -152,8 +146,18 @@ public class QiuShiClient extends JDialog {
             try {
                 currentBigImage = new ImageIcon(ImageIO.read(thumbStream));
                 thumbIncon = new ImageIcon(currentBigImage.getImage());
-                int thumbWidth = (int)(thumbIncon.getIconWidth() * 0.5);
-                thumbHeight = (int)(thumbIncon.getIconHeight() * 0.5);
+                int thumbWidth = thumbIncon.getIconWidth();
+                thumbHeight = thumbIncon.getIconHeight();
+                double k = 1;
+                if(thumbWidth > (getWidth() - 20)) {
+                    k = ((double)(getWidth() - 20) / thumbWidth);
+                    thumbWidth = (int)(thumbWidth * k);
+                    thumbHeight = (int)(thumbHeight * k);
+                } else if (thumbHeight > 400) {
+                    k = 400 / ((double)thumbWidth);
+                    thumbWidth = (int)(thumbWidth * k);
+                    thumbHeight = (int)(thumbHeight * k);
+                }
                 thumbIncon.setImage(thumbIncon.getImage().getScaledInstance(thumbWidth, thumbHeight, Image.SCALE_DEFAULT));
                 thumb.setIcon(thumbIncon);
                 thumb.setBounds((getWidth()-thumbWidth)/2, cententHeight + authorHeight + 20, thumbWidth, thumbHeight);
@@ -196,6 +200,15 @@ public class QiuShiClient extends JDialog {
         current = firstQS;
 
         imagePlayer = new ImageDisplayWindow(this);
+    }
+
+    public void loadingFont() {
+        try {
+            customFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getClassLoader().getResourceAsStream("custom_font.ttf"));
+        } catch(Exception e) {
+            e.printStackTrace();
+            
+        }
     }
 
     //得到一个按钮
@@ -275,7 +288,7 @@ public class QiuShiClient extends JDialog {
     }
 
     // 添加键盘监听事件
-    private void addShortKeyAttribute(Component comp) {
+    public void addShortKeyAttribute(Component comp) {
         comp.setFocusable(true);
         comp.addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
@@ -285,14 +298,26 @@ public class QiuShiClient extends JDialog {
                 } else if(keyCode == KeyEvent.VK_D || keyCode == KeyEvent.VK_RIGHT || keyCode == KeyEvent.VK_DOWN) {
                     toNext();
                 } else if(e.isControlDown() && keyCode == KeyEvent.VK_C) {
-                    // 快捷键Ctr+C, 复制内容到剪切板
-                    String context = content.getText();
-                    context = context.replaceAll("<br />", "\r\n");
-                    context = context.replaceAll("<[^>]+>|<[^>]+","");
-                    if(context != null && context.trim().length() > 0) {
-                        StringSelection stringSelection = new StringSelection(context);
-                        Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
-                        clpbrd.setContents(stringSelection, null);
+                    JLabel copyCmp = getCopyComponent();
+                    if(copyCmp.getText()!=null && copyCmp.getText().trim().length() > 0) {
+                        // 快捷键Ctr+C, 复制内容到剪切板
+                        String context = copyCmp.getText();
+                        context = context.replaceAll("<br />", "\r\n");
+                        context = context.replaceAll("<[^>]+>|<[^>]+","");
+                        if(context != null && context.trim().length() > 0) {
+                            StringSelection stringSelection = new StringSelection(context);
+                            Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+                            clpbrd.setContents(stringSelection, null);
+                        }
+                    } else if(copyCmp.getIcon()!=null) {
+                        // 快捷键Ctr+C, 复制图片到剪切板
+                        ImageIcon icon = (ImageIcon)copyCmp.getIcon();
+                        Image img = (Image)icon.getImage();
+                        if(img != null) {
+                            ImageTransferable transferable = new ImageTransferable(img);
+                            Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+                            clpbrd.setContents(transferable, null);
+                        }
                     }
                 }
             }
@@ -300,17 +325,24 @@ public class QiuShiClient extends JDialog {
         comp.requestFocus();
     }
 
+    /**
+     * 获取待复制到剪切板上的组件
+     */
+    public JLabel getCopyComponent() {
+        return content;
+    }
+
     // 添加内容鼠标右单击事件
-    private void addMouseClickListener() {
+    public void addMouseClickListener(JLabel comp, String command) {
         // 内容菜单
-        popupMenu = new JPopupMenu();
+        JPopupMenu popupMenu = new JPopupMenu();
         JMenuItem copyItem = new JMenuItem("复制 Ctr+C");
         copyItem.setFont(customFont.deriveFont(Font.PLAIN, 14));
         popupMenu.add(copyItem);
-        copyItem.setActionCommand(MenuItemMonitor.COPY_CONTENT);
-        copyItem.addActionListener(new MenuItemMonitor(content));
+        copyItem.setActionCommand(command);
+        copyItem.addActionListener(new MenuItemMonitor(comp));
 
-        content.addMouseListener(new MouseAdapter() {
+        comp.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 // 如果是弹出菜单事件(根据平台不同可能不同) 
                 if (event.isPopupTrigger()) {
@@ -492,5 +524,11 @@ public class QiuShiClient extends JDialog {
         this.setSize(300, cententHeight + authorHeight + 80 + thumbHeight);
 
         current = qiushi;
-    }   
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        exitSystem();
+    }
 }

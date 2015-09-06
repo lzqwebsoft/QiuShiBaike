@@ -15,6 +15,8 @@ public class ImageDisplayWindow extends QiuShiClient {
 
         // 添加移动属性
         addMoveWindowAttribute(this);
+
+        loadingFont();
         
         JRootPane rootPane= new JRootPane();
         rootPane.setLayout(new BorderLayout());
@@ -39,6 +41,8 @@ public class ImageDisplayWindow extends QiuShiClient {
 
         imageLabel = new JLabel();
         centerPane.add(imageLabel);
+
+        addMouseClickListener(imageLabel, MenuItemMonitor.COPY_IMAGE); // 添加菜单事件
         //============================================
 
         rootPane.add(centerPane, BorderLayout.CENTER);
@@ -46,11 +50,19 @@ public class ImageDisplayWindow extends QiuShiClient {
         setBackground(Color.white);
 
         setContentPane(rootPane);
+
+        addShortKeyAttribute(rootPane); // 添加键盘快捷键
     }
 
     public void exitImageDisplay() {
         setVisible(false);
     }
+
+    @Override
+    public JLabel getCopyComponent() {
+        return imageLabel;
+    }
+
 
     public void showImage(ImageIcon icon) {
         int thumbWidth = icon.getIconWidth();
