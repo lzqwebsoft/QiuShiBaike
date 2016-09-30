@@ -11,12 +11,12 @@ class QiuShiBaiKe(scrapy.Spider):
     ]
 
     def parse(self, response):
-        for article in response.xpath("//div[contains(@class, 'article')]"):
+        for article in response.xpath("//div[@id='content-left']/div[contains(@class, 'article')]"):
              item = QiuShiItem()
              author_sel =  article.xpath('div[contains(@class, "author")]/a')
              item['header'] = author_sel.xpath('img/@src').extract()          # 用户头像
              item['author'] = "".join(author_sel.xpath('h2/text()').extract()).strip()   # 用户名称
-             content_sel = article.xpath('div[@class="content"]')
+             content_sel = article.xpath("a[@class='contentHerf']/div[@class='content']/span")
              item['content'] = content_sel.xpath('text()').extract()        # 内容
              item['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # content_sel.xpath('@title').extract()     # 内容创建日期
              item['thumb'] = article.xpath("div[contains(@class, 'thumb')]/a/img/@src").extract()  # 内容附件图片
