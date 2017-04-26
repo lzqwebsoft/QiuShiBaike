@@ -18,7 +18,7 @@ class QiuShiThumbPipeline(ImagesPipeline):
     
      def get_media_requests(self, item, info):
          for thumb in item['thumb']:
-             yield scrapy.Request(thumb)
+             yield scrapy.Request('http:' + thumb)
 
      def item_completed(self, results, item, info):
          image_paths = [x['path'] for status, x in results if status]
@@ -32,7 +32,7 @@ class QiuShiHeaderPipeline(ImagesPipeline):
     
      def get_media_requests(self, item, info):
          for header in item['header']:
-             yield scrapy.Request(header)
+             yield scrapy.Request('http:' + header)
 
      def item_completed(self, results, item, info):
          image_paths = [x['path'] for status, x in results if status]
