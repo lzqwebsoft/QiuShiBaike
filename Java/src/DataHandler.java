@@ -6,6 +6,9 @@ import java.io.FileNotFoundException;
 
 
 public class DataHandler {
+    private String url;
+    private String username;
+    private String password;
     private Connection conn;
 
     public DataHandler() throws IOException, ClassNotFoundException, SQLException {
@@ -16,8 +19,8 @@ public class DataHandler {
         if(inputStream == null) {
             throw new FileNotFoundException("Property file db_config.properties not found in the classpath");
         }
-        String username = prop.getProperty("username");
-        String password = prop.getProperty("password");
+        username = prop.getProperty("username");
+        password = prop.getProperty("password");
         String hostname = prop.getProperty("hostname");
         String port = prop.getProperty("port");
         String dbname = prop.getProperty("database");
@@ -25,12 +28,13 @@ public class DataHandler {
         // 加载驱动
         Class.forName(drivername);
         // 获得连接实例对象
-        conn = DriverManager.getConnection("jdbc:mysql://" + hostname + ":" + port + "/"+dbname, username, password);
+        url = "jdbc:mysql://" + hostname + ":" + port + "/" + dbname;
+        conn = DriverManager.getConnection(url, username, password);
     }
 
     public QiuShi getDataByIdx(int currentId) throws SQLException {
         String script = "select * from qiushi where id >= ? order by id ASC limit 0,1;";
-        PreparedStatement ps=conn.prepareStatement(script);
+        PreparedStatement ps=this.getConnection().prepareStatement(script);
         ps.setInt(1, currentId);
         ResultSet result = ps.executeQuery();
         QiuShi qiushi = null;
@@ -47,7 +51,7 @@ public class DataHandler {
 
     public QiuShi getPrevious(int currentId) throws SQLException {
         String script = "select * from qiushi where id < ? order by id DESC limit 0,1;";
-        PreparedStatement ps=conn.prepareStatement(script);
+        PreparedStatement ps=this.getConnection().prepareStatement(script);
         ps.setInt(1, currentId);
         ResultSet result = ps.executeQuery();
         QiuShi qiushi = null;
@@ -64,7 +68,7 @@ public class DataHandler {
 
     public QiuShi getNext(int currentId) throws SQLException {
         String script = "select * from qiushi where id > ? order by id ASC limit 0,1;";
-        PreparedStatement ps=conn.prepareStatement(script);
+        PreparedStatement ps=this.getConnection().prepareStatement(script);
         ps.setInt(1, currentId);
         ResultSet result = ps.executeQuery();
         QiuShi qiushi = null;
@@ -77,6 +81,16 @@ public class DataHandler {
         result.close();
         ps.close();
         return qiushi;
+    }
+
+    // 获取数据库连接对象，如果连接对象已关闭，则重新创建
+    public Connection getConnection() throws SQLException {
+        if(conn!=null && conn.isValid(60)) {
+            return conn;
+        } else {
+            conn = DriverManager.getConnection(url, username, password);
+            return conn;
+        }
     }
 
     public void closeConnection() {

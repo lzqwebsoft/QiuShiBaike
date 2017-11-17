@@ -436,7 +436,7 @@ public class QiuShiClient extends JDialog {
     // 上一条
     public void toPrevious() {
         try {
-            QiuShi qs = this.getDataHandler().getPrevious(current.getId());
+            QiuShi qs = dataHandler.getPrevious(current.getId());
             if(qs==null) {
                 System.out.println("已是最新一条了，前面再无糗事！");
             } else {
@@ -450,7 +450,7 @@ public class QiuShiClient extends JDialog {
     // 下一条
     public void toNext() {
         try {
-            QiuShi qs = this.getDataHandler().getNext(current.getId());
+            QiuShi qs = dataHandler.getNext(current.getId());
             if(qs==null) {
                 System.out.println("已是最后一条了，后面再无糗事！");
             } else {
@@ -460,19 +460,6 @@ public class QiuShiClient extends JDialog {
             System.out.println("获取糗事失败！");
             e.printStackTrace();
         }
-    }
-
-    // 获取数据库连接操作对象
-    public DataHandler getDataHandler() {
-        if(this.dataHandler==null) {
-            try {
-                this.dataHandler = new DataHandler();
-            } catch(Exception e) {
-                System.out.println("获取数据库连接操作对象失败！");
-                e.printStackTrace();
-            }
-        }
-        return this.dataHandler;
     }
 
     private void updateWindow(QiuShi qiushi) {
